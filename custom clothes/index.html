@@ -3,376 +3,559 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Interactive Fitting Studio</title>
+    <title>Custom Hoodie Studio</title>
     <style>
+      @import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap");
+
       :root {
-        --bg-primary: #0f172a;
-        --bg-surface: #1e293b;
-        --accent: #38bdf8;
-        --text-main: #f8fafc;
-        --text-muted: #94a3b8;
-        --border: #334155;
+        --bg-main: #f6efe6;
+        --bg-card: #fff9f1;
+        --ink: #1f2a30;
+        --ink-soft: #5b6870;
+        --line: #d9ccbc;
+        --accent: #0f8a89;
+        --accent-soft: #d9f2f1;
       }
 
       * {
         box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-        font-family:
-          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       }
 
       body {
-        background-color: var(--bg-primary);
-        color: var(--text-main);
+        margin: 0;
         min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 2rem;
-      }
-
-      .studio-container {
-        display: grid;
-        grid-template-columns: 1fr 380px;
-        gap: 2rem;
-        max-width: 1100px;
-        width: 100%;
-        background: var(--bg-surface);
+        color: var(--ink);
+        font-family: "Space Grotesk", sans-serif;
+        background:
+          radial-gradient(circle at 20% 20%, #ffddaf 0%, transparent 35%),
+          radial-gradient(circle at 80% 18%, #bce9e7 0%, transparent 32%),
+          linear-gradient(145deg, #f9f4ec 0%, #f2ebdf 100%);
         padding: 1.5rem;
-        border-radius: 24px;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        border: 1px solid var(--border);
       }
 
-      /* --- Canvas Viewport Window --- */
-      .preview-viewport {
-        position: relative;
-        background: #111827;
-        border-radius: 16px;
-        overflow: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 550px;
-        border: 1px solid var(--border);
-      }
-
-      .base-model {
-        height: 100%;
-        max-height: 530px;
-        object-fit: contain;
-        user-select: none;
-        pointer-events: none;
-        z-index: 1;
-      }
-
-      .garment-overlay {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%) translate(var(--x, 0px), var(--y, 0px))
-          scale(var(--scale, 1));
-        transition: opacity 0.25s ease;
-        z-index: 2;
-        pointer-events: none;
-        will-change: transform;
-      }
-
-      /* --- Control Panel Panel --- */
-      .control-panel {
-        display: flex;
-        flex-direction: column;
-        gap: 1.75rem;
-      }
-
-      .panel-header h1 {
-        font-size: 1.5rem;
-        font-weight: 700;
-        margin-bottom: 0.25rem;
-      }
-
-      .panel-header p {
-        color: var(--text-muted);
-        font-size: 0.875rem;
-      }
-
-      .section-title {
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: var(--text-muted);
-        margin-bottom: 0.75rem;
-        font-weight: 700;
-      }
-
-      .catalog-grid {
+      .layout {
+        max-width: 1160px;
+        margin: 0 auto;
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 0.75rem;
+        grid-template-columns: 1.15fr 0.85fr;
+        gap: 1.25rem;
       }
 
-      .product-card {
-        background: var(--bg-primary);
-        border: 2px solid transparent;
-        border-radius: 12px;
-        padding: 0.5rem;
-        cursor: pointer;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      .panel {
+        background: var(--bg-card);
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        box-shadow: 0 18px 50px rgba(31, 42, 48, 0.12);
+      }
+
+      .preview {
+        padding: 1.25rem;
+      }
+
+      .preview-header {
         display: flex;
-        flex-direction: column;
-        align-items: center;
+        align-items: end;
+        justify-content: space-between;
+        margin-bottom: 1rem;
       }
 
-      .product-card:hover {
-        border-color: #475569;
-        transform: translateY(-2px);
+      .preview-header h1 {
+        font-family: "Bebas Neue", sans-serif;
+        font-size: 2.8rem;
+        letter-spacing: 0.04em;
+        margin: 0;
+        line-height: 0.9;
       }
 
-      .product-card.active {
-        border-color: var(--accent);
-        background: rgba(56, 189, 248, 0.05);
+      .preview-header p {
+        margin: 0;
+        color: var(--ink-soft);
+        max-width: 28ch;
+        font-size: 0.92rem;
       }
 
-      .product-thumb {
+      .stage {
+        position: relative;
+        min-height: 640px;
+        border-radius: 18px;
+        border: 1px solid var(--line);
+        overflow: hidden;
+        background:
+          linear-gradient(180deg, rgba(15, 138, 137, 0.08), rgba(255, 255, 255, 0)),
+          repeating-linear-gradient(
+            0deg,
+            rgba(15, 138, 137, 0.08) 0,
+            rgba(15, 138, 137, 0.08) 1px,
+            transparent 1px,
+            transparent 42px
+          );
+      }
+
+      .model-layer,
+      .hoodie-layer {
+        position: absolute;
+        inset: 0;
         width: 100%;
-        aspect-ratio: 1;
-        object-fit: contain;
-        margin-bottom: 0.5rem;
+        height: 100%;
       }
 
-      .product-title {
-        font-size: 0.75rem;
-        font-weight: 500;
-        text-align: center;
+      .hoodie-layer {
+        filter: drop-shadow(0 12px 12px rgba(0, 0, 0, 0.15));
       }
 
-      /* --- Custom Calibration Controls --- */
-      .calibration-deck {
-        background: var(--bg-primary);
-        padding: 1rem;
-        border-radius: 12px;
-        border: 1px solid var(--border);
+      .controls {
+        padding: 1.25rem;
         display: flex;
         flex-direction: column;
         gap: 1rem;
       }
 
-      .slider-group {
+      .section {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 0.9rem;
+        background: #fffdf8;
+      }
+
+      .section h2 {
+        margin: 0 0 0.75rem;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+        color: var(--ink-soft);
+      }
+
+      .row {
+        display: flex;
+        gap: 0.65rem;
+      }
+
+      .row > * {
+        flex: 1;
+      }
+
+      .field {
         display: flex;
         flex-direction: column;
         gap: 0.35rem;
       }
 
-      .slider-meta {
-        display: flex;
-        justify-content: space-between;
-        font-size: 0.825rem;
-        color: var(--text-muted);
+      .field label {
+        font-size: 0.84rem;
+        color: var(--ink-soft);
       }
 
-      .custom-slider {
+      select,
+      input[type="text"],
+      input[type="color"],
+      input[type="range"] {
         width: 100%;
-        accent-color: var(--accent);
-        background: var(--border);
-        height: 6px;
-        border-radius: 3px;
-        cursor: pointer;
       }
 
-      @media (max-width: 768px) {
-        .studio-container {
+      select,
+      input[type="text"] {
+        height: 40px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        font: inherit;
+        padding: 0 0.7rem;
+        background: white;
+      }
+
+      input[type="color"] {
+        height: 40px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: white;
+        padding: 0.2rem;
+      }
+
+      input[type="range"] {
+        accent-color: var(--accent);
+      }
+
+      .choice-group {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.45rem;
+      }
+
+      .choice {
+        text-align: center;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 0.4rem 0.2rem;
+        font-size: 0.75rem;
+        cursor: pointer;
+        background: white;
+      }
+
+      .choice.active {
+        background: var(--accent-soft);
+        border-color: var(--accent);
+      }
+
+      .toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 0.86rem;
+        color: var(--ink-soft);
+        padding: 0.35rem 0;
+      }
+
+      .meta {
+        margin-top: 0.5rem;
+        font-size: 0.82rem;
+        color: var(--ink-soft);
+      }
+
+      @media (max-width: 980px) {
+        .layout {
           grid-template-columns: 1fr;
         }
-        .preview-viewport {
-          min-height: 400px;
+
+        .stage {
+          min-height: 520px;
+        }
+
+        .preview-header h1 {
+          font-size: 2.3rem;
+        }
+      }
+
+      @media (max-width: 520px) {
+        body {
+          padding: 0.8rem;
+        }
+
+        .preview,
+        .controls {
+          padding: 0.85rem;
+        }
+
+        .row {
+          flex-direction: column;
+        }
+
+        .choice-group {
+          grid-template-columns: repeat(2, 1fr);
         }
       }
     </style>
   </head>
   <body>
-    <div class="studio-container">
-      <div class="preview-viewport">
-        <img
-          id="modelImage"
-          src="https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=600&q=80"
-          alt="Base Profile Studio Model"
-          class="base-model"
-        />
-        <img
-          id="garmentOverlay"
-          src=""
-          alt="Active Apparel Overlay"
-          class="garment-overlay"
-          style="display: none"
-        />
-      </div>
-
-      <div class="control-panel">
-        <div class="panel-header">
-          <h1>Fitting Studio</h1>
-          <p>
-            Select apparel layers below to overlay on the model configuration
-            canvas grid environment.
-          </p>
+    <main class="layout">
+      <section class="panel preview">
+        <div class="preview-header">
+          <h1>Hoodie Lab</h1>
+          <p>Design your hoodie on top of the model and dial in your final look.</p>
         </div>
 
-        <div>
-          <div class="section-title">Apparel Catalog</div>
-          <div class="catalog-grid" id="catalogGrid"></div>
+        <div class="stage">
+          <svg class="model-layer" viewBox="0 0 400 640" aria-label="Base model image">
+            <defs>
+              <linearGradient id="skin" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#f6ccb5" />
+                <stop offset="100%" stop-color="#e8b9a3" />
+              </linearGradient>
+              <linearGradient id="jean" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#6e7f8d" />
+                <stop offset="100%" stop-color="#4f5d68" />
+              </linearGradient>
+            </defs>
+
+            <rect x="0" y="0" width="400" height="640" fill="transparent" />
+            <circle cx="200" cy="92" r="42" fill="url(#skin)" />
+            <rect x="182" y="128" width="36" height="30" rx="16" fill="url(#skin)" />
+            <rect x="120" y="156" width="160" height="260" rx="76" fill="#efe8de" />
+            <rect x="140" y="405" width="120" height="165" rx="36" fill="url(#jean)" />
+            <rect x="153" y="567" width="34" height="22" rx="9" fill="#2f3a41" />
+            <rect x="214" y="567" width="34" height="22" rx="9" fill="#2f3a41" />
+          </svg>
+
+          <svg class="hoodie-layer" id="hoodieLayer" viewBox="0 0 400 640" aria-label="Hoodie overlay">
+            <g id="hoodieGroup" transform="translate(0 0) scale(1)">
+              <path id="hoodShape" fill="#23313b"></path>
+              <rect id="bodyShape" x="120" y="175" width="160" height="218" rx="44" fill="#23313b" />
+              <rect id="leftSleeve" x="84" y="186" width="55" height="208" rx="28" fill="#23313b" />
+              <rect id="rightSleeve" x="261" y="186" width="55" height="208" rx="28" fill="#23313b" />
+              <rect id="waistband" x="124" y="360" width="152" height="22" rx="11" fill="#1a252d" />
+              <path id="pocketShape" fill="#1a252d" opacity="0.95"></path>
+              <line id="zipLine" x1="200" y1="186" x2="200" y2="385" stroke="#efefef" stroke-width="2" opacity="0" />
+              <line id="drawLeft" x1="192" y1="176" x2="186" y2="230" stroke="#ececec" stroke-width="2" stroke-linecap="round" />
+              <line id="drawRight" x1="208" y1="176" x2="214" y2="230" stroke="#ececec" stroke-width="2" stroke-linecap="round" />
+              <text
+                id="logoText"
+                x="200"
+                y="265"
+                text-anchor="middle"
+                font-size="26"
+                font-family="Space Grotesk, sans-serif"
+                font-weight="700"
+                fill="#ffffff"
+              >
+                YOUR LOGO
+              </text>
+            </g>
+          </svg>
         </div>
+      </section>
 
-        <div>
-          <div class="section-title">Alignment Transformations</div>
-          <div class="calibration-deck">
-            <div class="slider-group">
-              <div class="slider-meta">
-                <span>Scale Dimension</span>
-                <span id="scaleVal">1.0x</span>
-              </div>
-              <input
-                type="range"
-                id="scaleSlider"
-                class="custom-slider"
-                min="0.5"
-                max="2"
-                step="0.01"
-                value="1"
-              />
+      <aside class="panel controls">
+        <section class="section">
+          <h2>Hoodie Type</h2>
+          <div class="choice-group" id="styleChoices">
+            <button class="choice active" data-style="pullover">Pullover</button>
+            <button class="choice" data-style="zip">Zip-Up</button>
+            <button class="choice" data-style="oversized">Oversized</button>
+            <button class="choice" data-style="cropped">Cropped</button>
+          </div>
+        </section>
+
+        <section class="section">
+          <h2>Color Setup</h2>
+          <div class="row">
+            <div class="field">
+              <label for="bodyColor">Body color</label>
+              <input id="bodyColor" type="color" value="#23313b" />
             </div>
-
-            <div class="slider-group">
-              <div class="slider-meta">
-                <span>Offset X (Horizontal)</span>
-                <span id="xVal">0px</span>
-              </div>
-              <input
-                type="range"
-                id="xSlider"
-                class="custom-slider"
-                min="-200"
-                max="200"
-                step="1"
-                value="0"
-              />
-            </div>
-
-            <div class="slider-group">
-              <div class="slider-meta">
-                <span>Offset Y (Vertical)</span>
-                <span id="yVal">0px</span>
-              </div>
-              <input
-                type="range"
-                id="ySlider"
-                class="custom-slider"
-                min="-200"
-                max="200"
-                step="1"
-                value="0"
-              />
+            <div class="field">
+              <label for="sleeveColor">Sleeve color</label>
+              <input id="sleeveColor" type="color" value="#23313b" />
             </div>
           </div>
-        </div>
-      </div>
-    </div>
+          <label class="toggle" for="twoToneToggle"
+            >Two-tone sleeves
+            <input id="twoToneToggle" type="checkbox" />
+          </label>
+        </section>
+
+        <section class="section">
+          <h2>Graphic</h2>
+          <div class="field">
+            <label for="logoInput">Front text</label>
+            <input id="logoInput" type="text" value="YOUR LOGO" maxlength="16" />
+          </div>
+          <div class="row">
+            <div class="field">
+              <label for="logoColor">Text color</label>
+              <input id="logoColor" type="color" value="#ffffff" />
+            </div>
+            <div class="field">
+              <label for="logoSize">Text size</label>
+              <input id="logoSize" type="range" min="16" max="42" step="1" value="26" />
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <h2>Fit And Details</h2>
+          <div class="field">
+            <label for="fitScale">Fit scale</label>
+            <input id="fitScale" type="range" min="0.9" max="1.15" step="0.01" value="1" />
+          </div>
+          <div class="field">
+            <label for="offsetY">Vertical placement</label>
+            <input id="offsetY" type="range" min="-30" max="35" step="1" value="0" />
+          </div>
+          <label class="toggle" for="pocketToggle"
+            >Front pocket
+            <input id="pocketToggle" type="checkbox" checked />
+          </label>
+          <label class="toggle" for="drawToggle"
+            >Drawstrings
+            <input id="drawToggle" type="checkbox" checked />
+          </label>
+          <p class="meta" id="summaryText"></p>
+        </section>
+      </aside>
+    </main>
 
     <script>
-      // Mock Catalog Registry: Replace structural URLs with transparent PNG graphics for seamless blending
-      const apparelCatalog = [
-        {
-          id: "shirt-1",
-          name: "Cyber Jersey",
-          url: "https://i.ibb.co/zH49MGr/jersey-placeholder.png",
-          thumb: "https://placehold.co/150x150/1e293b/38bdf8?text=Cyber",
-        },
-        {
-          id: "shirt-2",
-          name: "Street Parka",
-          url: "https://i.ibb.co/YyYh0pX/parka-placeholder.png",
-          thumb: "https://placehold.co/150x150/1e293b/38bdf8?text=Parka",
-        },
-        {
-          id: "shirt-3",
-          name: "Classic Tee",
-          url: "https://i.ibb.co/M9X88w0/tee-placeholder.png",
-          thumb: "https://placehold.co/150x150/1e293b/38bdf8?text=Tee",
-        },
-      ];
+      const state = {
+        style: "pullover",
+        bodyColor: "#23313b",
+        sleeveColor: "#23313b",
+        twoTone: false,
+        logo: "YOUR LOGO",
+        logoColor: "#ffffff",
+        logoSize: 26,
+        fitScale: 1,
+        offsetY: 0,
+        pocket: true,
+        drawstrings: true,
+      };
 
-      // Element Handles Mapping
-      const catalogGrid = document.getElementById("catalogGrid");
-      const garmentOverlay = document.getElementById("garmentOverlay");
-      const scaleSlider = document.getElementById("scaleSlider");
-      const xSlider = document.getElementById("xSlider");
-      const ySlider = document.getElementById("ySlider");
+      const styleMap = {
+        pullover: { bodyY: 175, bodyH: 218, bodyW: 160, sleeveW: 55, sleeveH: 208, hoodDepth: 64, logoY: 265, zipper: false },
+        zip: { bodyY: 175, bodyH: 218, bodyW: 160, sleeveW: 55, sleeveH: 208, hoodDepth: 64, logoY: 265, zipper: true },
+        oversized: { bodyY: 170, bodyH: 236, bodyW: 176, sleeveW: 62, sleeveH: 220, hoodDepth: 72, logoY: 273, zipper: false },
+        cropped: { bodyY: 188, bodyH: 176, bodyW: 158, sleeveW: 52, sleeveH: 190, hoodDepth: 56, logoY: 257, zipper: false },
+      };
 
-      const scaleVal = document.getElementById("scaleVal");
-      const xVal = document.getElementById("xVal");
-      const yVal = document.getElementById("yVal");
+      const hoodieGroup = document.getElementById("hoodieGroup");
+      const hoodShape = document.getElementById("hoodShape");
+      const bodyShape = document.getElementById("bodyShape");
+      const leftSleeve = document.getElementById("leftSleeve");
+      const rightSleeve = document.getElementById("rightSleeve");
+      const waistband = document.getElementById("waistband");
+      const pocketShape = document.getElementById("pocketShape");
+      const zipLine = document.getElementById("zipLine");
+      const drawLeft = document.getElementById("drawLeft");
+      const drawRight = document.getElementById("drawRight");
+      const logoText = document.getElementById("logoText");
+      const summaryText = document.getElementById("summaryText");
 
-      // Render Catalog Selection Grid View
-      function initCatalog() {
-        apparelCatalog.forEach((item, index) => {
-          const card = document.createElement("div");
-          card.className = `product-card ${index === 0 ? "active" : ""}`;
-          card.dataset.id = item.id;
-          card.innerHTML = `
-                    <img src="${item.thumb}" class="product-thumb" alt="${item.name}">
-                    <div class="product-title">${item.name}</div>
-                `;
+      const styleChoices = document.getElementById("styleChoices");
+      const bodyColorInput = document.getElementById("bodyColor");
+      const sleeveColorInput = document.getElementById("sleeveColor");
+      const twoToneToggle = document.getElementById("twoToneToggle");
+      const logoInput = document.getElementById("logoInput");
+      const logoColorInput = document.getElementById("logoColor");
+      const logoSizeInput = document.getElementById("logoSize");
+      const fitScaleInput = document.getElementById("fitScale");
+      const offsetYInput = document.getElementById("offsetY");
+      const pocketToggle = document.getElementById("pocketToggle");
+      const drawToggle = document.getElementById("drawToggle");
 
-          card.addEventListener("click", () => {
-            document
-              .querySelectorAll(".product-card")
-              .forEach((c) => c.classList.remove("active"));
-            card.classList.add("active");
-            applyGarment(item.url);
-          });
-
-          catalogGrid.appendChild(card);
-        });
-
-        // Initialize default product render layout
-        if (apparelCatalog.length > 0) applyGarment(apparelCatalog[0].url);
+      function adjustColor(hex, amount) {
+        const sanitized = hex.replace("#", "");
+        const num = parseInt(sanitized, 16);
+        const r = Math.min(255, Math.max(0, (num >> 16) + amount));
+        const g = Math.min(255, Math.max(0, ((num >> 8) & 0x00ff) + amount));
+        const b = Math.min(255, Math.max(0, (num & 0x0000ff) + amount));
+        return `#${(r << 16 | g << 8 | b).toString(16).padStart(6, "0")}`;
       }
 
-      // Apply Garment Asset Layer Source
-      function applyGarment(url) {
-        garmentOverlay.style.opacity = "0";
-        setTimeout(() => {
-          garmentOverlay.src = url;
-          garmentOverlay.style.display = "block";
-          garmentOverlay.style.opacity = "1";
-        }, 150);
+      function render() {
+        const shape = styleMap[state.style];
+        const bodyX = 200 - shape.bodyW / 2;
+        const sleeveLeftX = bodyX - shape.sleeveW + 20;
+        const sleeveRightX = bodyX + shape.bodyW - 20;
+        const cuffY = shape.bodyY + shape.bodyH - 18;
+        const pocketY = shape.bodyY + shape.bodyH - 78;
+
+        const hoodPath = `M ${bodyX + 36} ${shape.bodyY + 16} C ${bodyX + 52} ${shape.bodyY - shape.hoodDepth}, ${bodyX + shape.bodyW - 52} ${shape.bodyY - shape.hoodDepth}, ${bodyX + shape.bodyW - 36} ${shape.bodyY + 16} Q 200 ${shape.bodyY + 38}, ${bodyX + 36} ${shape.bodyY + 16}`;
+
+        hoodShape.setAttribute("d", hoodPath);
+        hoodShape.setAttribute("fill", adjustColor(state.bodyColor, -8));
+
+        bodyShape.setAttribute("x", bodyX);
+        bodyShape.setAttribute("y", shape.bodyY);
+        bodyShape.setAttribute("width", shape.bodyW);
+        bodyShape.setAttribute("height", shape.bodyH);
+        bodyShape.setAttribute("fill", state.bodyColor);
+
+        leftSleeve.setAttribute("x", sleeveLeftX);
+        leftSleeve.setAttribute("y", shape.bodyY + 11);
+        leftSleeve.setAttribute("width", shape.sleeveW);
+        leftSleeve.setAttribute("height", shape.sleeveH);
+        leftSleeve.setAttribute("fill", state.twoTone ? state.sleeveColor : state.bodyColor);
+
+        rightSleeve.setAttribute("x", sleeveRightX);
+        rightSleeve.setAttribute("y", shape.bodyY + 11);
+        rightSleeve.setAttribute("width", shape.sleeveW);
+        rightSleeve.setAttribute("height", shape.sleeveH);
+        rightSleeve.setAttribute("fill", state.twoTone ? state.sleeveColor : state.bodyColor);
+
+        waistband.setAttribute("x", bodyX + 4);
+        waistband.setAttribute("y", cuffY);
+        waistband.setAttribute("width", shape.bodyW - 8);
+        waistband.setAttribute("fill", adjustColor(state.bodyColor, -20));
+
+        const pocketPath = `M ${bodyX + 24} ${pocketY} Q 200 ${pocketY + 20}, ${bodyX + shape.bodyW - 24} ${pocketY} L ${bodyX + shape.bodyW - 36} ${pocketY + 44} Q 200 ${pocketY + 62}, ${bodyX + 36} ${pocketY + 44} Z`;
+        pocketShape.setAttribute("d", pocketPath);
+        pocketShape.setAttribute("display", state.pocket ? "block" : "none");
+        pocketShape.setAttribute("fill", adjustColor(state.bodyColor, -24));
+
+        zipLine.setAttribute("x1", 200);
+        zipLine.setAttribute("x2", 200);
+        zipLine.setAttribute("y1", shape.bodyY + 10);
+        zipLine.setAttribute("y2", shape.bodyY + shape.bodyH - 12);
+        zipLine.setAttribute("opacity", shape.zipper ? "1" : "0");
+
+        drawLeft.setAttribute("x1", 193);
+        drawLeft.setAttribute("y1", shape.bodyY + 6);
+        drawLeft.setAttribute("x2", 186);
+        drawLeft.setAttribute("y2", shape.bodyY + 60);
+        drawRight.setAttribute("x1", 207);
+        drawRight.setAttribute("y1", shape.bodyY + 6);
+        drawRight.setAttribute("x2", 214);
+        drawRight.setAttribute("y2", shape.bodyY + 60);
+        drawLeft.setAttribute("display", state.drawstrings ? "block" : "none");
+        drawRight.setAttribute("display", state.drawstrings ? "block" : "none");
+
+        logoText.textContent = state.logo.trim() || "YOUR LOGO";
+        logoText.setAttribute("y", shape.logoY);
+        logoText.setAttribute("font-size", String(state.logoSize));
+        logoText.setAttribute("fill", state.logoColor);
+
+        hoodieGroup.setAttribute("transform", `translate(0 ${state.offsetY}) scale(${state.fitScale})`);
+        summaryText.textContent = `${state.style.toUpperCase()} | ${state.twoTone ? "Two-tone" : "Single color"} | Scale ${state.fitScale.toFixed(2)}x`;
       }
 
-      // Matrix Transformation State Update Pipeline Loop
-      function updateTransformations() {
-        const scale = scaleSlider.value;
-        const x = xSlider.value;
-        const y = ySlider.value;
+      styleChoices.addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-style]");
+        if (!button) return;
 
-        // Apply reactive dynamic string properties inside inline CSS scope
-        garmentOverlay.style.setProperty("--scale", scale);
-        garmentOverlay.style.setProperty("--x", `${x}px`);
-        garmentOverlay.style.setProperty("--y", `${y}px`);
+        state.style = button.dataset.style;
+        styleChoices.querySelectorAll(".choice").forEach((item) => item.classList.remove("active"));
+        button.classList.add("active");
+        render();
+      });
 
-        // Update telemetry reporting strings
-        scaleVal.textContent = `${scale}x`;
-        xVal.textContent = `${x}px`;
-        yVal.textContent = `${y}px`;
-      }
+      bodyColorInput.addEventListener("input", () => {
+        state.bodyColor = bodyColorInput.value;
+        render();
+      });
 
-      // Add Active Transformation Event Listeners
-      scaleSlider.addEventListener("input", updateTransformations);
-      xSlider.addEventListener("input", updateTransformations);
-      ySlider.addEventListener("input", updateTransformations);
+      sleeveColorInput.addEventListener("input", () => {
+        state.sleeveColor = sleeveColorInput.value;
+        render();
+      });
 
-      // Core App Initialization Hook
-      initCatalog();
-      updateTransformations();
+      twoToneToggle.addEventListener("change", () => {
+        state.twoTone = twoToneToggle.checked;
+        render();
+      });
+
+      logoInput.addEventListener("input", () => {
+        state.logo = logoInput.value;
+        render();
+      });
+
+      logoColorInput.addEventListener("input", () => {
+        state.logoColor = logoColorInput.value;
+        render();
+      });
+
+      logoSizeInput.addEventListener("input", () => {
+        state.logoSize = Number(logoSizeInput.value);
+        render();
+      });
+
+      fitScaleInput.addEventListener("input", () => {
+        state.fitScale = Number(fitScaleInput.value);
+        render();
+      });
+
+      offsetYInput.addEventListener("input", () => {
+        state.offsetY = Number(offsetYInput.value);
+        render();
+      });
+
+      pocketToggle.addEventListener("change", () => {
+        state.pocket = pocketToggle.checked;
+        render();
+      });
+
+      drawToggle.addEventListener("change", () => {
+        state.drawstrings = drawToggle.checked;
+        render();
+      });
+
+      render();
     </script>
   </body>
 </html>
