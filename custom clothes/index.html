@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Interactive Fitting Studio</title>
+    <style>
+      :root {
+        --bg-primary: #0f172a;
+        --bg-surface: #1e293b;
+        --accent: #38bdf8;
+        --text-main: #f8fafc;
+        --text-muted: #94a3b8;
+        --border: #334155;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      }
+
+      body {
+        background-color: var(--bg-primary);
+        color: var(--text-main);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+      }
+
+      .studio-container {
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        gap: 2rem;
+        max-width: 1100px;
+        width: 100%;
+        background: var(--bg-surface);
+        padding: 1.5rem;
+        border-radius: 24px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        border: 1px solid var(--border);
+      }
+
+      /* --- Canvas Viewport Window --- */
+      .preview-viewport {
+        position: relative;
+        background: #111827;
+        border-radius: 16px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 550px;
+        border: 1px solid var(--border);
+      }
+
+      .base-model {
+        height: 100%;
+        max-height: 530px;
+        object-fit: contain;
+        user-select: none;
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      .garment-overlay {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) translate(var(--x, 0px), var(--y, 0px))
+          scale(var(--scale, 1));
+        transition: opacity 0.25s ease;
+        z-index: 2;
+        pointer-events: none;
+        will-change: transform;
+      }
+
+      /* --- Control Panel Panel --- */
+      .control-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 1.75rem;
+      }
+
+      .panel-header h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+      }
+
+      .panel-header p {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+      }
+
+      .section-title {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+        margin-bottom: 0.75rem;
+        font-weight: 700;
+      }
+
+      .catalog-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+      }
+
+      .product-card {
+        background: var(--bg-primary);
+        border: 2px solid transparent;
+        border-radius: 12px;
+        padding: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .product-card:hover {
+        border-color: #475569;
+        transform: translateY(-2px);
+      }
+
+      .product-card.active {
+        border-color: var(--accent);
+        background: rgba(56, 189, 248, 0.05);
+      }
+
+      .product-thumb {
+        width: 100%;
+        aspect-ratio: 1;
+        object-fit: contain;
+        margin-bottom: 0.5rem;
+      }
+
+      .product-title {
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-align: center;
+      }
+
+      /* --- Custom Calibration Controls --- */
+      .calibration-deck {
+        background: var(--bg-primary);
+        padding: 1rem;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .slider-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+      }
+
+      .slider-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.825rem;
+        color: var(--text-muted);
+      }
+
+      .custom-slider {
+        width: 100%;
+        accent-color: var(--accent);
+        background: var(--border);
+        height: 6px;
+        border-radius: 3px;
+        cursor: pointer;
+      }
+
+      @media (max-width: 768px) {
+        .studio-container {
+          grid-template-columns: 1fr;
+        }
+        .preview-viewport {
+          min-height: 400px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="studio-container">
+      <div class="preview-viewport">
+        <img
+          id="modelImage"
+          src="https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=600&q=80"
+          alt="Base Profile Studio Model"
+          class="base-model"
+        />
+        <img
+          id="garmentOverlay"
+          src=""
+          alt="Active Apparel Overlay"
+          class="garment-overlay"
+          style="display: none"
+        />
+      </div>
+
+      <div class="control-panel">
+        <div class="panel-header">
+          <h1>Fitting Studio</h1>
+          <p>
+            Select apparel layers below to overlay on the model configuration
+            canvas grid environment.
+          </p>
+        </div>
+
+        <div>
+          <div class="section-title">Apparel Catalog</div>
+          <div class="catalog-grid" id="catalogGrid"></div>
+        </div>
+
+        <div>
+          <div class="section-title">Alignment Transformations</div>
+          <div class="calibration-deck">
+            <div class="slider-group">
+              <div class="slider-meta">
+                <span>Scale Dimension</span>
+                <span id="scaleVal">1.0x</span>
+              </div>
+              <input
+                type="range"
+                id="scaleSlider"
+                class="custom-slider"
+                min="0.5"
+                max="2"
+                step="0.01"
+                value="1"
+              />
+            </div>
+
+            <div class="slider-group">
+              <div class="slider-meta">
+                <span>Offset X (Horizontal)</span>
+                <span id="xVal">0px</span>
+              </div>
+              <input
+                type="range"
+                id="xSlider"
+                class="custom-slider"
+                min="-200"
+                max="200"
+                step="1"
+                value="0"
+              />
+            </div>
+
+            <div class="slider-group">
+              <div class="slider-meta">
+                <span>Offset Y (Vertical)</span>
+                <span id="yVal">0px</span>
+              </div>
+              <input
+                type="range"
+                id="ySlider"
+                class="custom-slider"
+                min="-200"
+                max="200"
+                step="1"
+                value="0"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Mock Catalog Registry: Replace structural URLs with transparent PNG graphics for seamless blending
+      const apparelCatalog = [
+        {
+          id: "shirt-1",
+          name: "Cyber Jersey",
+          url: "https://i.ibb.co/zH49MGr/jersey-placeholder.png",
+          thumb: "https://placehold.co/150x150/1e293b/38bdf8?text=Cyber",
+        },
+        {
+          id: "shirt-2",
+          name: "Street Parka",
+          url: "https://i.ibb.co/YyYh0pX/parka-placeholder.png",
+          thumb: "https://placehold.co/150x150/1e293b/38bdf8?text=Parka",
+        },
+        {
+          id: "shirt-3",
+          name: "Classic Tee",
+          url: "https://i.ibb.co/M9X88w0/tee-placeholder.png",
+          thumb: "https://placehold.co/150x150/1e293b/38bdf8?text=Tee",
+        },
+      ];
+
+      // Element Handles Mapping
+      const catalogGrid = document.getElementById("catalogGrid");
+      const garmentOverlay = document.getElementById("garmentOverlay");
+      const scaleSlider = document.getElementById("scaleSlider");
+      const xSlider = document.getElementById("xSlider");
+      const ySlider = document.getElementById("ySlider");
+
+      const scaleVal = document.getElementById("scaleVal");
+      const xVal = document.getElementById("xVal");
+      const yVal = document.getElementById("yVal");
+
+      // Render Catalog Selection Grid View
+      function initCatalog() {
+        apparelCatalog.forEach((item, index) => {
+          const card = document.createElement("div");
+          card.className = `product-card ${index === 0 ? "active" : ""}`;
+          card.dataset.id = item.id;
+          card.innerHTML = `
+                    <img src="${item.thumb}" class="product-thumb" alt="${item.name}">
+                    <div class="product-title">${item.name}</div>
+                `;
+
+          card.addEventListener("click", () => {
+            document
+              .querySelectorAll(".product-card")
+              .forEach((c) => c.classList.remove("active"));
+            card.classList.add("active");
+            applyGarment(item.url);
+          });
+
+          catalogGrid.appendChild(card);
+        });
+
+        // Initialize default product render layout
+        if (apparelCatalog.length > 0) applyGarment(apparelCatalog[0].url);
+      }
+
+      // Apply Garment Asset Layer Source
+      function applyGarment(url) {
+        garmentOverlay.style.opacity = "0";
+        setTimeout(() => {
+          garmentOverlay.src = url;
+          garmentOverlay.style.display = "block";
+          garmentOverlay.style.opacity = "1";
+        }, 150);
+      }
+
+      // Matrix Transformation State Update Pipeline Loop
+      function updateTransformations() {
+        const scale = scaleSlider.value;
+        const x = xSlider.value;
+        const y = ySlider.value;
+
+        // Apply reactive dynamic string properties inside inline CSS scope
+        garmentOverlay.style.setProperty("--scale", scale);
+        garmentOverlay.style.setProperty("--x", `${x}px`);
+        garmentOverlay.style.setProperty("--y", `${y}px`);
+
+        // Update telemetry reporting strings
+        scaleVal.textContent = `${scale}x`;
+        xVal.textContent = `${x}px`;
+        yVal.textContent = `${y}px`;
+      }
+
+      // Add Active Transformation Event Listeners
+      scaleSlider.addEventListener("input", updateTransformations);
+      xSlider.addEventListener("input", updateTransformations);
+      ySlider.addEventListener("input", updateTransformations);
+
+      // Core App Initialization Hook
+      initCatalog();
+      updateTransformations();
+    </script>
+  </body>
+</html>
